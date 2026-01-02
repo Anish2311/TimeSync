@@ -1,0 +1,9 @@
+@font-face {
+  font-family: "MyFont";
+  src: url("./Science_Gothic/static/ScienceGothic-Light.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* Optional: global usage */
+
