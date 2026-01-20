@@ -15,6 +15,7 @@ import Graph from "./Graph";
 import { useRef } from "react";
 import * as htmlToImage from "html-to-image";
 import StatsGrid from "./Stats"
+import DropdownTable from "./Editor";
 
 let tData = {}
 let tConfig = {}
@@ -28,7 +29,6 @@ export default function TimetableLayout({ data }) {
   const [classFilter, setClassFilter] = useState("All");
   
   const items = [];
-  
   
   
   for (const [key, value] of Object.entries(data.techers)) {
@@ -180,6 +180,7 @@ export default function TimetableLayout({ data }) {
             subj = {data.subjects}
             sall = {data.studallotment}
             tall = {data.teallotment}
+            tables = {data}
             />
           )}
         </ScrollArea>
@@ -189,7 +190,7 @@ export default function TimetableLayout({ data }) {
 }
 
 
-function TimetableTable({ title, rows, subj, sall, tall}) {
+function TimetableTable({ title, rows, subj, sall, tall, tables}) {
     let t = 0
     for(let i =0 ; i < tData[title].length; i++){
       t += tData[title][i]['periods']
@@ -213,7 +214,7 @@ function TimetableTable({ title, rows, subj, sall, tall}) {
 
       const dataUrl = await htmlToImage.toPng(tableRef.current, {
         cacheBust: true,
-        backgroundColor: "#0f0f0f", // optional: dark theme support
+        backgroundColor: "#0f0f0f",
       });
 
       const link = document.createElement("a");
@@ -224,6 +225,8 @@ function TimetableTable({ title, rows, subj, sall, tall}) {
 
 
     const subjectColorMap = {};
+    const [notEditing, setEditing] = useState(true);
+
 
     function getSubjectColor(subject) {
       if (subject == ' ' || subject == '   ') return "transparent";
@@ -240,85 +243,102 @@ function TimetableTable({ title, rows, subj, sall, tall}) {
 
 
     const periodHeaders = Array.from({ length: rows[Object.keys(rows)[0]].length }, (_, i) => `P${i + 1}`);
-    return (
-        <div className="max-w-full flex flex-col">
-        <Card className="rounded-[1rem] shadow-lg overflow-hidden">
-            <h1 style={{fontSize: "1.2rem"
-                      }}>{ title }</h1>
-            <CardContent className="p-4 overflow-auto max-h-[70vh]">
-              <div ref = {tableRef}>
-                <table className="w-full text-sm border-collapse table-fixed">
-                  <thead>
-                      <tr>
-                        <th></th> {/* Empty corner cell */}
-                        {periodHeaders.map((p, index) => (
-                          <th key={index} style={{ padding: "6px 12px", textAlign: "center" }}>
-                            {p}
-                          </th>
+    if(notEditing){
+      console.log("NOT EDITING");
+      
+      return (
+          <div className="max-w-full flex flex-col">
+          <Card className="rounded-[1rem] shadow-lg overflow-hidden">
+              <h1 style={{fontSize: "1.2rem"
+                        }}>{ title }</h1>
+              <CardContent className="p-4 overflow-auto max-h-[70vh]">
+                <div ref = {tableRef}>
+                  <button onClick={(e) => setEditing(false)}>Edit</button>
+                  <table className="w-full text-sm border-collapse table-fixed">
+                    <thead>
+                        <tr>
+                          <th></th> {/* Empty corner cell */}
+                          {periodHeaders.map((p, index) => (
+                            <th key={index} style={{ padding: "6px 12px", textAlign: "center" }}>
+                              {p}
+                            </th>
+                          ))}
+                        </tr>
+                    </thead>
+  
+                    <tbody> 
+                        {rows?.map((row, i) => (
+                          <tr key={i} className="hover:bg-slate-100/10">
+                              <td style={{ fontWeight: "bold", textAlign: "center" }}>
+                                {week[i]}
+                              </td>
+  
+                                {row.map((cell, j) => (
+                                    <td
+                                    key={j}
+                                    className="border text-center w-24"
+                                    style={{
+                                      backgroundColor: getSubjectColor(cell),
+                                      color: "white",
+                                      // borderColor: "#1e293b",
+                                    }}
+                                    >
+                                    <div className="min-h-[2.4rem] flex items-center justify-center">
+                                      {cell}
+                                    </div>
+                                    </td>
+                                ))}
+                            </tr>
                         ))}
-                      </tr>
-                  </thead>
-
-                  <tbody> 
-                      {rows?.map((row, i) => (
-                        <tr key={i} className="hover:bg-slate-100/10">
-                            <td style={{ fontWeight: "bold", textAlign: "center" }}>
-                              {week[i]}
-                            </td>
-
-                              {row.map((cell, j) => (
-                                  <td
-                                  key={j}
-                                  className="border text-center w-24"
-                                  style={{
-                                    backgroundColor: getSubjectColor(cell),
-                                    color: "white",
-                                    // borderColor: "#1e293b",
-                                  }}
-                                  >
-                                  <div className="min-h-[2.4rem] flex items-center justify-center">
-                                    {cell}
-                                  </div>
-                                  </td>
-                              ))}
-                          </tr>
-                      ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-        <div className="flex flex-row p-6 items-start overflow-auto gap-16">
-          <div className="w-1/2 h-1/2">
-            <Graph chartConfig={tConfig} chartData={tData[title]}></Graph>
-          </div>
-          <div className="w-1/2 h-1/2">
-            <Card>
-              <CardTitle>Stats</CardTitle>
-              <CardContent>
-                <div className="flex flex-row max-w-full gap-0">
-                  <div className="flex flex-col w-[30%] gap-4">
-                      <p className="text-left">Total Slots : {t}</p>
-                      {/* <p className="flex-1 w-96">Classes handling : {}</p> */}
-                      <button
-                        onClick={downloadPNG}
-                        className="self-start bg-blue-600 text-white px-3 py-1 rounded text-sm"
-                      >
-                        Download PNG
-                      </button>
-
-                  </div >
-                  <div className="flex flex-row gap-2 w-[70%] h-[10rem]" style={{overflowX: "scroll"}}>
-                      {title in subj
-                      ? <StatsGrid title="Teacher allocation" stats={tall[title]}></StatsGrid>
-                      : <StatsGrid title="Teacher allocation" stats={sall[title]}></StatsGrid>
-                      }
-                  </div>
+                    </tbody>
+                  </table>
                 </div>
               </CardContent>
-            </Card>
+          <div className="flex flex-row p-6 items-start overflow-auto gap-16">
+            <div className="w-1/2 h-1/2">
+              <Graph chartConfig={tConfig} chartData={tData[title]}></Graph>
+            </div>
+            <div className="w-1/2 h-1/2">
+              <Card>
+                <CardTitle>Stats</CardTitle>
+                <CardContent>
+                  <div className="flex flex-row max-w-full gap-0">
+                    <div className="flex flex-col w-[30%] gap-4">
+                        <p className="text-left">Total Slots : {t}</p>
+                        {/* <p className="flex-1 w-96">Classes handling : {}</p> */}
+                        <button
+                          onClick={downloadPNG}
+                          className="self-start bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                        >
+                          Download PNG
+                        </button>
+  
+                    </div >
+                    <div className="flex flex-row gap-2 w-[70%] h-[10rem]" style={{overflowX: "scroll"}}>
+                        {title in subj
+                        ? <StatsGrid title="Teacher allocation" stats={tall[title]}></StatsGrid>
+                        : <StatsGrid title="Teacher allocation" stats={sall[title]}></StatsGrid>
+                        }
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
+          </Card>
+          </div>
+      );
+    }
+    else{
+      return (
+        <div>
+          <button onClick={(e) => setEditing(true)}>Edit</button>
+          <DropdownTable initialTableData={rows} options={title in subj
+                        ? tall[title].map(list => list[1])
+                        : sall[title].map(list => list[0])
+                        }
+                        tableS={tables} titlE={title}></DropdownTable>
         </div>
-        </Card>
-        </div>
-    );
+      )
+    }
 }

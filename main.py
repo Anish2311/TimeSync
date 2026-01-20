@@ -254,7 +254,7 @@ async def upload_file(file: UploadFile = File(...),
             if over:
                 break
         else:
-            print(len(backtracking))
+            return {'error':'NOT POSSIBLE. RELAX CONSTRAINTS.'}
         for i in classes:
             tt = []
             for j in range(classes[i].row):
@@ -385,7 +385,7 @@ async def upload_file(file: UploadFile = File(...),
                                         if maxL < len(classes[i[1]].entropy[indI][indJ]):
                                             maxL = len(classes[i[1]].entropy[indI][indJ])
                                         appe = [[i[1],classes[backtracking[j][0][0]].table[indI][indJ]],[indI,indJ],[len(classes[i[1]].entropy[indI][indJ]),maxL]]
-                                        print('HAHAHA')
+                                        # print('HAHAHA')
                                 classes[backtracking[j][0][0]].table[indI][indJ] = ' '
                                 classes[backtracking[j][0][0]].num -= 1
                                 entropying()
@@ -428,6 +428,7 @@ async def upload_file(file: UploadFile = File(...),
     tm = 0
     tc = 0
     c = {}
+    subMax = maxPeriod * rows
     for value1, value2, value3, value4 in zip(df['Teacher'], df['Classes'], df['Periods'], df['Subject']):
         # cv = False
         if value1 != ' ':
@@ -448,14 +449,18 @@ async def upload_file(file: UploadFile = File(...),
             else:
                 tallotment[cv] = [[sb,value2]]
             if value2 in sallotment:
-                sallotment[value2].append([sb,cv])
+                sallotment[value2].append([sb,cv,value3])
             else:
-                sallotment[value2] = [[sb,cv]]
+                sallotment[value2] = [[sb,cv,value3]]
             tc += value3
             if value2 in c:
                 c[value2] += 1
             else:
                 c[value2] = 1
+        
+        # print(value3,subMax)
+        if value3 > subMax:
+            return {'error':"Could not fit periods for class - " + value2 + " subject - " + sb + ". Relax the MAX PERIOD PER DAY constraint."}
     if tm > cols*rows or max(c.values()) > cols*rows:
         return {'error':"SUFFICIENT PERIODS NOT PROVIDED"}
             
