@@ -25,7 +25,7 @@ export default function FileUploader({ onUpload }) {
     formData.append("layouts", JSON.stringify(table));
 
     try {
-      const res = await fetch("http://localhost:8000/upload", {
+      const res = await fetch("https://timesync-api.vishvamcodes.com/upload", {
         method: "POST",
         // mode: "cors",
         body: formData,
